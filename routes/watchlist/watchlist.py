@@ -5,7 +5,7 @@ Endpoints for the watchlist feature.
 """
 
 from flask import Blueprint, jsonify, request
-from services.watchlist_service import save_to_watchlist, get_watchlist
+from services.watchlist_service import add_to_watchlist, get_watchlist
 from services.collection_service import FilmNotFoundError
 
 watchlist_bp = Blueprint("watchlist", __name__)
