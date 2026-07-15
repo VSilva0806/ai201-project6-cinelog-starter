@@ -46,6 +46,12 @@ Updated models.py to match main's post-refactor state: changed `Film.id` to `db.
 **How I verified no conflict remains:**
 Ran the full test suite (`pytest tests/ -v`) — all 8 tests pass, including test_watchlist.py's `test_add_to_watchlist_nonexistent_film_raises`, which passes a UUID-formatted string as a nonexistent film_id, and the sort/search tests, which round-trip real `Film.id` values through `add_to_watchlist()`. I also confirmed no merge commits exist in feature/watchlist's history (`git log --merges --oneline feature/watchlist` returns nothing — the one merge commit in the repo, bbe206c, only exists on main), so the branch stays on a clean, linear history.
 
+## Comment 7 — Remove from watchlist
+**What I did:**
+Added `remove_from_watchlist(user_id, film_id)` to services/watchlist_service.py, modeled directly on `remove_from_collection()` in services/collection_service.py: it looks up the `WatchlistEntry` for the given user/film via `.filter_by(user_id=..., film_id=...).first()`, raises `NotInCollectionError` if no entry exists, and otherwise deletes the entry and commits. I reused `NotInCollectionError` from collection_service.py rather than defining a new `NotInWatchlistError`, following the same precedent already established for `add_to_watchlist()`, which reuses `FilmNotFoundError` and `AlreadyInCollectionError` from collection_service.py instead of defining watchlist-specific equivalents.
+**How I verified:**
+I added two tests to tests/test_watchlist.py: `test_remove_from_watchlist_removes_entry`, which adds a film to the watchlist, removes it, asserts the return value is `True`, and then queries `WatchlistEntry` directly to confirm no row remains; and `test_remove_from_watchlist_not_present_raises`, which asserts that calling `remove_from_watchlist()` for a film never added to the watchlist raises `NotInCollectionError`, mirroring the `pytest.raises` style used in `test_add_to_watchlist_nonexistent_film_raises`. Ran `pytest tests/ -v` — all 10 tests pass, including the 2 new ones.
+
 ## PR Description
 
 Adds a **watchlist** feature: users can save films they intend to watch later, view the list, and search it. `POST /watchlist/<user_id>/add` adds a film by UUID (rejecting nonexistent films and duplicate adds); `GET /watchlist/<user_id>` returns the list, sorted by `date_added` descending, with an optional `?search=` title filter. New `WatchlistEntry` model mirrors `CollectionEntry`, rebased onto main's UUID film-ID refactor.
