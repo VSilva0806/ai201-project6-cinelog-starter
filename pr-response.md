@@ -52,6 +52,17 @@ Added `remove_from_watchlist(user_id, film_id)` to services/watchlist_service.py
 **How I verified:**
 I added two tests to tests/test_watchlist.py: `test_remove_from_watchlist_removes_entry`, which adds a film to the watchlist, removes it, asserts the return value is `True`, and then queries `WatchlistEntry` directly to confirm no row remains; and `test_remove_from_watchlist_not_present_raises`, which asserts that calling `remove_from_watchlist()` for a film never added to the watchlist raises `NotInCollectionError`, mirroring the `pytest.raises` style used in `test_add_to_watchlist_nonexistent_film_raises`. Ran `pytest tests/ -v` — all 10 tests pass, including the 2 new ones.
 
+## Additional Test — Duplicate add to watchlist
+
+**What I did:**
+Added `test_add_to_watchlist_duplicate_raises` to tests/test_watchlist.py: it adds a film to the watchlist, then adds the same film again and asserts `AlreadyInCollectionError` is raised, then queries `WatchlistEntry` directly and asserts the count is exactly 1.
+
+**Why I chose this edge case:**
+This wasn't requested by the reviewer, but it closes a gap that was present in Comment 2. The dedup logic in `add_to_watchlist()` was verified at the time only by reasoning that it's structurally identical to `add_to_collection()`'s dedup logic, and by running `test_add_to_collection_duplicate_raises` in tests/test_collection.py — not by running an actual test against `add_to_watchlist()` itself. `AlreadyInCollectionError` was already imported into test_watchlist.py but never exercised there. Since duplicate-add is the exact behavior the reviewer flagged and I changed, it's the one path most likely to silently regress (e.g. if the two dedup implementations drift apart later) without a direct test catching it.
+
+**How I verified:**
+Ran `pytest tests/test_watchlist.py -v` — all 7 tests pass, including the new one.
+
 ## PR Description
 
 Adds a **watchlist** feature: users can save films they intend to watch later, view the list, and search it. `POST /watchlist/<user_id>/add` adds a film by UUID (rejecting nonexistent films and duplicate adds); `GET /watchlist/<user_id>` returns the list, sorted by `date_added` descending, with an optional `?search=` title filter. New `WatchlistEntry` model mirrors `CollectionEntry`, rebased onto main's UUID film-ID refactor.
