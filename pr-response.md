@@ -23,13 +23,14 @@ I verified the test by simply running it and confirming it passes. I ran it usin
 
 ## Comment 4 — Default visibility
 **My position:**
+I chose public=True as the default for collections
 **Reasoning:**
+The main behavior I intend to encourage is sharing film collections with other users. Since the app is centered on discovering and showcasing favorite films, making collections public by default reduces the number of steps required for useres who want to contribute to the community. This essentially makes it easy for users to explore other users' collections and discover new films.
 **Tradeoff acknowledged:**
+Using public=False as the default would prioritize user privacy by ensuring collections remain private unless a user explicitly chooses to share them. That approach reduces the chance of accidentally exposing a collection. However, I believe the benefits of encouraging discoverability and community interaction better fit the intended purpose of this application. Users who want to keep a collection private can still change the visibility setting if they desire when creating or editing the collection.
 
 ## Comment 5 — Sort order
-**My position:**
-**Reasoning:**
-**Engagement with reviewer's point:**
+
 
 ## Comment 6 — Rebase
 **What conflicted:**
