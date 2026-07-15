@@ -30,7 +30,12 @@ The main behavior I intend to encourage is sharing film collections with other u
 Using public=False as the default would prioritize user privacy by ensuring collections remain private unless a user explicitly chooses to share them. That approach reduces the chance of accidentally exposing a collection. However, I believe the benefits of encouraging discoverability and community interaction better fit the intended purpose of this application. Users who want to keep a collection private can still change the visibility setting if they desire when creating or editing the collection.
 
 ## Comment 5 — Sort order
-
+**My position:**
+I agree that watchlists should default to sorting by date added rather than alphabetically.
+**Reasoning:**
+Sorting by date added keeps the most recently added films at the top of the watchlist, making it easier for both the owner and other users viewing a public watchlist to see the user's current interests. Since watchlists are often updated over time, showing the newest additions first provides more relevant context than an alphabetical list, which doesn't reflect when a film was added or what the user is currently planning to watch
+**Engagement with reviewer's point:**
+Sorting alphabetically provides a consistent and predictable order, which can make browsing large watchlists easier. However, I believe a date-added default better matches how users typically interact with watchlists, and adding a search option addresses the need to quickly find specific films without sacrificing the benefits of showing recent additions first.
 
 ## Comment 6 — Rebase
 **What conflicted:**
