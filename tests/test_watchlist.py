@@ -73,6 +73,20 @@ def test_add_to_watchlist_duplicate_raises(app, sample_user, sample_film):
         assert count == 1
 
 
+def test_add_to_watchlist_explicit_public_false(app, sample_user, sample_film):
+    """
+    Passing public=False should override the default and persist as private.
+    """
+    with app.app_context():
+        entry = add_to_watchlist(user_id=sample_user, film_id=sample_film, public=False)
+        assert entry.public is False
+
+        in_db = WatchlistEntry.query.filter_by(
+            user_id=sample_user, film_id=sample_film
+        ).first()
+        assert in_db.public is False
+
+
 def test_remove_from_watchlist_removes_entry(app, sample_user, sample_film):
     """
     Removing a film that is on the watchlist should delete its entry.

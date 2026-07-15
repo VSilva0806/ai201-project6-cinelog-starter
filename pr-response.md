@@ -63,6 +63,17 @@ This wasn't requested by the reviewer, but it closes a gap that was present in C
 **How I verified:**
 Ran `pytest tests/test_watchlist.py -v` — all 7 tests pass, including the new one.
 
+## Additional Feature — Explicit visibility on add
+
+**What I did:**
+Added a `public` parameter to `add_to_watchlist(user_id, film_id, public=True)` in services/watchlist_service.py so callers can set an entry's visibility explicitly at creation time instead of always getting the model's default. The default stays `public=True`, so every existing call site (including the ones in tests/test_watchlist.py) is unaffected. Updated `POST /watchlist/<user_id>/add` in routes/watchlist/watchlist.py to read an optional `"public"` key from the request body (`data.get("public", True)`) and pass it through, so the endpoint now accepts `{ "film_id": "<uuid>", "public": <bool, optional> }`.
+
+**Why:**
+Comment 4 settled on `public=True` as the default for the model column, but the service function had no way to override it — the only way to make an entry private was to add it and then edit it after the fact. Since the default itself was a judgment call (discoverability vs. privacy), callers who know upfront that an entry should be private shouldn't be forced through an extra edit step to get there.
+
+**How I verified:**
+Added `test_add_to_watchlist_explicit_public_false` to tests/test_watchlist.py: it calls `add_to_watchlist(..., public=False)`, asserts the returned entry's `public` is `False`, then queries `WatchlistEntry` directly to confirm the persisted row also has `public=False`. Ran `pytest tests/test_watchlist.py -v` — all 8 tests pass, including the new one and the existing tests that call `add_to_watchlist()` without a `public` argument (confirming the default wasn't broken).
+
 ## PR Description
 
 Adds a **watchlist** feature: users can save films they intend to watch later, view the list, and search it. `POST /watchlist/<user_id>/add` adds a film by UUID (rejecting nonexistent films and duplicate adds); `GET /watchlist/<user_id>` returns the list, sorted by `date_added` descending, with an optional `?search=` title filter. New `WatchlistEntry` model mirrors `CollectionEntry`, rebased onto main's UUID film-ID refactor.
