@@ -3,9 +3,11 @@ from app import create_app, db
 from models import User, Film, WatchlistEntry
 from services.watchlist_service import (
     add_to_watchlist,
+    remove_from_watchlist,
     get_watchlist,
-    FilmNotFoundError,  
+    FilmNotFoundError,
     AlreadyInCollectionError,
+    NotInCollectionError,
 )
 
 @pytest.fixture
@@ -51,6 +53,33 @@ def test_add_to_watchlist_nonexistent_film_raises(app, sample_user):
 
         with pytest.raises(FilmNotFoundError):
             add_to_watchlist(user_id=sample_user, film_id=fake_film_id)
+
+
+def test_remove_from_watchlist_removes_entry(app, sample_user, sample_film):
+    """
+    Removing a film that is on the watchlist should delete its entry.
+    """
+    with app.app_context():
+        add_to_watchlist(user_id=sample_user, film_id=sample_film)
+
+        removed = remove_from_watchlist(user_id=sample_user, film_id=sample_film)
+        assert removed is True
+
+        # Confirm no entry remains
+        in_db = WatchlistEntry.query.filter_by(
+            user_id=sample_user, film_id=sample_film
+        ).first()
+        assert in_db is None
+
+
+def test_remove_from_watchlist_not_present_raises(app, sample_user, sample_film):
+    """
+    Removing a film that isn't on the watchlist should raise
+    NotInCollectionError, not silently succeed.
+    """
+    with app.app_context():
+        with pytest.raises(NotInCollectionError):
+            remove_from_watchlist(user_id=sample_user, film_id=sample_film)
 
 
 def test_get_watchlist_sorts_by_date_added_desc(app, sample_user):
