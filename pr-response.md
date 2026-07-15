@@ -4,6 +4,8 @@
 
 Before opening the PR, I asked Claude Code to check every commit on `feature/watchlist` (`git log main..feature/watchlist`) against the Conventional Commits rules in `CONTRIBUTING.md` — correct type prefix (`feat:`/`fix:`/`test:`/`docs:`), imperative mood, and one logical change per commit rather than mixed-purpose messages like the "Not acceptable" examples in the guide. It confirmed all 11 commits complied: each uses an allowed prefix, reads as an imperative short description rather than something like "fixed a bug" or "more changes," and separates distinct concerns into their own commits (e.g. the rename in `9d689c0` and the dedup logic in `b769af8` are two commits, not one, even though both touch `watchlist_service.py`). This was a quick, mechanical compliance check against a written rubric, not a judgment call — I still wrote and reviewed every commit message myself.
 
+![Organized commit history](docs/images/commit-organization.jpg)
+
 ## Comment 1 — Rename
 **What I did:**
 I used VS Code's text search feature to look for text named "save_to_watchlist". Said text corresponded to the function definition and its following calls throughout the codebase. "save_to_watchlist" was found in routes/watchlist.py and services/watchlist_service.py and renamed to "add_to_watchlist".
