@@ -13,8 +13,15 @@ watchlist_bp = Blueprint("watchlist", __name__)
 
 @watchlist_bp.route("/<user_id>", methods=["GET"])
 def view_watchlist(user_id):
-    """GET /watchlist/<user_id> — Return the user's watchlist."""
-    films = get_watchlist(user_id)
+    """
+    GET /watchlist/<user_id> — Return the user's watchlist, newest first.
+
+    Query params:
+        search (str, optional): Filter to films whose title contains this
+            value (case-insensitive).
+    """
+    search = request.args.get("search")
+    films = get_watchlist(user_id, search=search)
     return jsonify(films)
 
 
@@ -29,5 +36,5 @@ def add_film(user_id):
     if not data or "film_id" not in data:
         return jsonify({"error": "film_id is required"}), 400
 
-    entry = save_to_watchlist(user_id=user_id, film_id=data["film_id"])
+    entry = add_to_watchlist(user_id=user_id, film_id=data["film_id"])
     return jsonify(entry.to_dict()), 201
