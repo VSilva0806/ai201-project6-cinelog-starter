@@ -1,7 +1,8 @@
 # PR Response Doc — CineLog Watchlist Feature
 
 ## AI Usage
-<!-- Fill in at the end — how you used AI tools during this project -->
+
+Before opening the PR, I asked Claude Code to check every commit on `feature/watchlist` (`git log main..feature/watchlist`) against the Conventional Commits rules in `CONTRIBUTING.md` — correct type prefix (`feat:`/`fix:`/`test:`/`docs:`), imperative mood, and one logical change per commit rather than mixed-purpose messages like the "Not acceptable" examples in the guide. It confirmed all 11 commits complied: each uses an allowed prefix, reads as an imperative short description rather than something like "fixed a bug" or "more changes," and separates distinct concerns into their own commits (e.g. the rename in `9d689c0` and the dedup logic in `b769af8` are two commits, not one, even though both touch `watchlist_service.py`). This was a quick, mechanical compliance check against a written rubric, not a judgment call — I still wrote and reviewed every commit message myself.
 
 ## Comment 1 — Rename
 **What I did:**
@@ -46,4 +47,29 @@ Updated models.py to match main's post-refactor state: changed `Film.id` to `db.
 Ran the full test suite (`pytest tests/ -v`) — all 8 tests pass, including test_watchlist.py's `test_add_to_watchlist_nonexistent_film_raises`, which passes a UUID-formatted string as a nonexistent film_id, and the sort/search tests, which round-trip real `Film.id` values through `add_to_watchlist()`. I also confirmed no merge commits exist in feature/watchlist's history (`git log --merges --oneline feature/watchlist` returns nothing — the one merge commit in the repo, bbe206c, only exists on main), so the branch stays on a clean, linear history.
 
 ## PR Description
-<!-- Written at the end — feature overview, design decisions, manual testing steps -->
+
+Adds a **watchlist** feature: users can save films they intend to watch later, view the list, and search it. `POST /watchlist/<user_id>/add` adds a film by UUID (rejecting nonexistent films and duplicate adds); `GET /watchlist/<user_id>` returns the list, sorted by `date_added` descending, with an optional `?search=` title filter. New `WatchlistEntry` model mirrors `CollectionEntry`, rebased onto main's UUID film-ID refactor.
+
+Two design decisions (full reviewer Q&A in Comments 4–6 above): **visibility defaults to `public=True`** on each entry, to keep friction low for the app's discovery-focused use case at the cost of privacy-by-default; and **sort order defaults to newest-added-first rather than alphabetical**, since recency better reflects current intent, with `search` covering the "find one film" case alphabetical order would otherwise help with.
+
+**Manual test steps** (no signup/film-creation endpoint exists, so seed data directly):
+1. `pip install -r requirements.txt && python app.py` (runs on `localhost:5000`).
+2. In a second terminal, seed a user and film via a Flask shell:
+   ```python
+   from app import create_app, db
+   from models import User, Film
+   app = create_app()
+   with app.app_context():
+       u = User(username='demo', email='demo@example.com')
+       f = Film(title='Paddington 2', year=2017)
+       db.session.add_all([u, f]); db.session.commit()
+       print(u.id, f.id)
+   ```
+   Note the printed `user_id`/`film_id`.
+3. `curl -X POST localhost:5000/watchlist/<user_id>/add -H "Content-Type: application/json" -d '{"film_id": "<film_id>"}'` → expect `201` with `"public": true`.
+4. Repeat step 3 with the same film → expect an error response (dedup), not a second row.
+5. Repeat step 3 with a made-up UUID → expect an error, not a raw DB exception.
+6. Seed a second film (e.g. "The Matrix", added after the first), add it to the watchlist, then `curl localhost:5000/watchlist/<user_id>` → confirm it's listed before the first film (newest-first, not alphabetical).
+7. `curl "localhost:5000/watchlist/<user_id>?search=paddington"` → only Paddington 2; `?search=nonexistent` → `[]`.
+
+Automated: `pytest tests/ -v` passes, including `test_watchlist.py`'s dedup, nonexistent-film, sort, and search cases; branch history is a clean linear rebase onto main (no merge commits).
